@@ -1,0 +1,15 @@
+html, body{
+	position: absolute;
+	width:  100%;
+	height: 100%;
+	overflow: hidden;
+	background-color: #222;
+	color: #ccc;
+	font-family: 'Arial';
+}
+
+#canvas{
+	position: absolute;
+	width:  100%;
+	height: 100%;
+}
