@@ -1,6 +1,7 @@
 port = 3000
 ip = 'localhost'
 # ip = '192.168.1.101'
+# ip = '192.168.253.151'
 
 express = require 'express'
 app = express()
@@ -33,6 +34,9 @@ randColor = ->
 	return "##{c}"
 
 createSnake = ->
+	# x = 100
+	# y = 100
+	# dir = 0
 	x = Math.random()*world_size|0
 	y = Math.random()*world_size|0
 	dir = Math.random()*4|0
@@ -47,7 +51,7 @@ createSnake = ->
 io.on 'connect',(socket)->
 	console.log 'connect'
 
-	id = socket.id.replace /\W/g,''
+	id = socket.id.replace '/#',''
 
 	snake = createSnake()
 	clients[id] = { socket, snake }
@@ -60,6 +64,7 @@ io.on 'connect',(socket)->
 	socket.emit 'foods', foods
 
 	socket.on 'disconnect',->
+		console.log 'disconnect'
 		delete clients[id]
 
 	socket.on 'key',(keyCode)->
