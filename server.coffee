@@ -1,8 +1,9 @@
 port = 3000
+ip = '192.168.1.101'
 
 express = require 'express'
 app = express()
-server = app.listen port,->console.log 'server start'
+server = app.listen port,ip,->console.log 'server start'
 
 app.use express.static 'dist'
 
@@ -22,11 +23,13 @@ randColor = ->
 
 
 createSnake = ->
-	x = (Math.random()*500*.1|0)*10
-	y = (Math.random()*500*.1|0)*10
+	x = Math.random()*1280|0
+	y = Math.random()*720|0
+	dir = Math.random()*4|0
 	return {
 		body: [[x,y]]
-		dir: Math.random()*4|0
+		dir: dir
+		nextDir: dir
 		color: randColor()
 	}
 
@@ -34,12 +37,17 @@ createSnake = ->
 io.on 'connect',(socket)->
 	console.log 'connect'
 
-	snake = createSnake()
-	socket.emit 'you', snake
-	socket.emit 'foods', foods
-
 	{id} = socket
+
+	snake = createSnake()
 	clients[id] = { socket, snake }
+
+	snakes = {}
+	for id,{snake:{body,color}} of clients
+		snakes[id] = {body,color}
+
+	socket.emit 'snakes', snakes
+	socket.emit 'foods', foods
 
 	socket.on 'disconnect',->
 		delete clients[id]
@@ -50,14 +58,13 @@ io.on 'connect',(socket)->
 			when 39 then 1 #right
 			when 38 then 2 #up
 			when 40 then 3 #down
-		snake.dir = d if (snake.dir<2) isnt (d<2)
+		snake.nextDir = d if (snake.dir<2) isnt (d<2)
 
 createFoods = ->
 	foods.push {
-		x: (Math.random()*500*.1|0)*10
-		y: (Math.random()*500*.1|0)*10
+		x: Math.random()*1280|0
+		y: Math.random()*720|0
 	}
-
 
 tryEatFood = (n)->
 	for f,i in foods
@@ -68,20 +75,26 @@ tryEatFood = (n)->
 	return false
 
 move = ->
-	for id,{socket,snake:{body, dir}} of clients
+	snakes = {}
+	for id,{socket,snake} of clients
+		{body, dir, nextDir} = snake
+
 		n = body[0].concat()
-		switch dir
-			when 0 then n[0] -= 10
-			when 1 then n[0] += 10
-			when 2 then n[1] -= 10
-			when 3 then n[1] += 10
+		switch nextDir
+			when 0 then n[0] -= 1
+			when 1 then n[0] += 1
+			when 2 then n[1] -= 1
+			when 3 then n[1] += 1
+
+		snake.dir = nextDir
 
 		body.unshift n
 		body.pop() unless tryEatFood n
 
-		socket.emit 'move',body
+		snakes[id] = {body}
 
-setInterval move,200
+	io.emit 'snakes', snakes
 
+setInterval move,100
 
 createFoods() for i in [0..100]

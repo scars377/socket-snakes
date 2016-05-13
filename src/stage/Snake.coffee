@@ -1,15 +1,15 @@
 class Snake extends createjs.Shape
-	body: [[50,40]]
-	dir: 0
 	color: '#fff'
 
-	constructor:(@body, @dir, @color)->
+	constructor:()->
 		super()
 
-	move:(@body)=>
+	setData:({body,color})=>
+		@color = color if color?
+
 		@graphics.clear()
 		@graphics.f @color
-		@graphics.dr(x, y, 10, 10) for [x,y] in @body
+		@graphics.dr(x, y, 1, 1) for [x,y] in body
 
 
 module.exports = Snake

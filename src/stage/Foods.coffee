@@ -1,7 +1,8 @@
 class Food extends createjs.Shape
 	constructor:->
 		super()
-		@graphics.f('#660').dr(2,2,6,6)
+		@graphics.f('#ff0').dr(0,0,1,1)
+		# @graphics.f('#660').dr(2,2,6,6)
 
 
 

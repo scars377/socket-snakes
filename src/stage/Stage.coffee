@@ -2,11 +2,12 @@ Snake = require './Snake'
 Foods = require './Foods'
 
 class Stage extends createjs.Stage
+	snakes: {}
+
 	connect:=>
 		socket = io()
 
 		snake = null
-
 
 		socket.on 'foods', (foods)=>
 			if !@foods?
@@ -14,12 +15,12 @@ class Stage extends createjs.Stage
 				@addChild @foods
 			@foods.setData foods
 
-
-		socket.on 'you',({body,dir,color})=>
-			snake = new Snake body,dir,color
-			@addChild snake
-
-		socket.on 'move', (body)->snake?.move body
+		socket.on 'snakes', (snakes)=>
+			for id,body of snakes
+				if !@snakes[id]?
+					@snakes[id] = new Snake()
+					@addChild @snakes[id]
+				@snakes[id].setData body
 
 		window.addEventListener 'keydown',({keyCode})->
 			if 37 <= keyCode <= 40
@@ -39,8 +40,8 @@ class Stage extends createjs.Stage
 
 
 	resize:=>
-		@canvas.setAttribute 'width', window.innerWidth
-		@canvas.setAttribute 'height',window.innerHeight
+		@canvas.setAttribute 'width' ,1280
+		@canvas.setAttribute 'height',720
 
 
 
