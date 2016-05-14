@@ -1,6 +1,6 @@
 port = 3000
-ip = 'localhost'
-# ip = '192.168.1.101'
+# ip = 'localhost'
+ip = '192.168.1.101'
 # ip = '192.168.253.151'
 
 express = require 'express'
@@ -34,9 +34,6 @@ randColor = ->
 	return "##{c}"
 
 createSnake = ->
-	# x = 100
-	# y = 100
-	# dir = 0
 	x = Math.random()*world_size|0
 	y = Math.random()*world_size|0
 	dir = Math.random()*4|0
@@ -73,6 +70,7 @@ io.on 'connect',(socket)->
 			when 39 then 1 #right
 			when 38 then 2 #up
 			when 40 then 3 #down
+		{snake} = clients[id]
 		snake.nextDir = d if (snake.dir<2) isnt (d<2)
 
 createFoods = ->
@@ -94,30 +92,49 @@ tryEatFood = (n)->
 			return true
 	return false
 
+collision =(n)->
+	for _,{snake:{body}} of clients
+		for {x,y} in body
+			if n.x is x and n.y is y
+				return true
+	return false
+
 move = ->
 	snakes = {}
 	for id,{socket,snake} of clients
-		{body, dir, nextDir} = snake
+		{body, dir, nextDir, dead} = snake
 
-		n = Object.assign {},body[0]
-		switch nextDir
-			when 0
-				n.x -= 1
-				n.x = world_size-1 if n.x < 0
-			when 1
-				n.x += 1
-				n.x = 0 if n.x > world_size-1
-			when 2
-				n.y -= 1
-				n.y = world_size-1 if n.y < 0
-			when 3
-				n.y += 1
-				n.y = 0 if n.y > world_size-1
+		if dead?
+			if dead > 0
+				snake.dead -= 1
+			else
+				delete snake.dead
+				clients[id].snake = createSnake()
+				{body} = clients[id].snake
 
-		snake.dir = nextDir
+		else
+			n = Object.assign {},body[0]
+			switch nextDir
+				when 0
+					n.x -= 1
+					n.x = world_size-1 if n.x < 0
+				when 1
+					n.x += 1
+					n.x = 0 if n.x > world_size-1
+				when 2
+					n.y -= 1
+					n.y = world_size-1 if n.y < 0
+				when 3
+					n.y += 1
+					n.y = 0 if n.y > world_size-1
 
-		body.unshift n
-		body.pop() unless tryEatFood n
+			if collision n
+				snake.dead = 20
+
+			else
+				snake.dir = nextDir
+				body.unshift n
+				body.pop() unless tryEatFood n
 
 		snakes[id] = {body}
 
